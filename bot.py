@@ -14,7 +14,7 @@ def addCaption(filename, text, percentage=0.8, outname = 'frame_out.jpg'):
     _draw = ImageDraw.Draw(im)
     _font = ImageFont.truetype("OpenSans-SemiBold.ttf", 48) # Download from https://fonts.google.com/specimen/Open+Sans
     W, H = im.size
-    w, h = _draw.textsize(text)
+    w, h = _draw.textsize(text, font=_font)
     _draw.text(((W-w)/2+4,(H-h)*percentage+4), text, font=_font, fill="black")
     _draw.text(((W-w)/2,(H-h)*percentage), text, font=_font, fill="white")
     im.save(outname)
