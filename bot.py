@@ -71,14 +71,5 @@ async def on_message(message):
         if exists == False:
             await message.channel.send("are you sure the quote exists")
 
-
-    
-    if re.search("^!frame", message.content):
-        if getFrame(timestamp_to_sec(message.content[7:])):
-            await message.channel.send(file=discord.File('frame.jpg'))
-        else:
-            await message.channel.send("botu bozmayin")
-        
-
 client.run(TOKEN)
 #<Message id=830811270453264446 channel=<TextChannel id=188223698786975744 name='general' position=0 nsfw=False news=False category_id=None> type=<MessageType.default: 0> author=<Member id=156536977766744066 name='Gürkan' discriminator='5338' bot=False nick='Gürkan' guild=<Guild id=188223698786975744 name='labalov' shard_id=None chunked=False member_count=32>> flags=<MessageFlags value=0>>

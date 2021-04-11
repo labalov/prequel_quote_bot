@@ -135,3 +135,4 @@ dmypy.json
 
 # authentication keys
 *.pem
+*.ppk
