@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# movies subtitle files and images
+*.mp4
+*.jpg
+*.srt
+
+# authentication keys
+*.pem
