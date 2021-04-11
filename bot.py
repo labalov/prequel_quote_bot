@@ -59,8 +59,8 @@ async def on_message(message):
     if re.search("^!quote", message.content):
         for i in range(0, 3):
             subtitles = subtitles_array[i]
-            quote = message.content[7:].lower()
-            quote = quote.replace(" ", "")
+            quote_raw = message.content[7:]
+            quote = quote_raw.lower().replace(" ", "")
             #quote_regex = "..:..:..,... \-\-> ..:..:..,...(.|\s)*"
             quote_regex = ""
             for element in quote:
@@ -79,7 +79,8 @@ async def on_message(message):
 
                 average = (timestamp_to_sec(subtitles[indicator+1: indicator+13]) + timestamp_to_sec(subtitles[indicator-16: indicator-4]))/2
                 getFrame(vidcap_array[i], average)
-                await message.channel.send(file=discord.File('frame.jpg'))
+                addCaption('frame.jpg', quote_raw)
+                await message.channel.send(file=discord.File('frame_out.jpg'))
                 exists = True
         if exists == False:
             await message.channel.send("are you sure the quote exists")
