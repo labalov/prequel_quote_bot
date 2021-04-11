@@ -1,16 +1,84 @@
 # bot.py
 import os
+import re
+import cv2
 
 import discord
 from dotenv import load_dotenv
 
+def getFrame(video, sec):
+    video.set(cv2.CAP_PROP_POS_MSEC,sec*1000)
+    hasFrames,image = video.read()
+    print(hasFrames)
+    if hasFrames:
+        cv2.imwrite("frame.jpg", image)     # save 
+    return hasFrames
+
+#00:02:59,399
+def timestamp_to_sec(stamp):
+    print(stamp)
+    print(stamp[0:2])
+    hour = int(stamp[0:2])
+    minute = int(stamp[3:5])
+    second = int(stamp[6:8])
+    millis = int(stamp[9:12])
+    return 3600*hour + 60*minute + second + millis/1000
+
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-print(TOKEN)
+
 client = discord.Client()
+
+vidcap_array = [cv2.VideoCapture('movies/1.mp4'), cv2.VideoCapture('movies/2.mp4'), cv2.VideoCapture('movies/3.mp4')]
+subtitles_array = [open('./movies/1.srt').read().lower(), open('./movies/2.srt').read().lower(), open('./movies/3.srt').read().lower()]
 
 @client.event
 async def on_ready():
-    print(f'{client.user} has connected to Discord!')
+    for guild in client.guilds:
+        print (guild)
+#!quote 00:02:59,399
+@client.event
+async def on_message(message):
+    print(message)
+    print(message.content)
+    exists = False
+    if re.search("^!quote", message.content):
+        for i in range(0, 3):
+            subtitles = subtitles_array[i]
+            quote = message.content[7:].lower()
+            quote = quote.replace(" ", "")
+            #quote_regex = "..:..:..,... \-\-> ..:..:..,...(.|\s)*"
+            quote_regex = ""
+            for element in quote:
+                quote_regex += element
+                quote_regex += "\s*"
+            
+            if re.search(quote_regex, subtitles) and exists == False:
+                last = re.search(quote_regex, subtitles).start()
+                print(last)
+
+                indicator = re.search("(?s:.*)-->", subtitles[0:last]).end()
+                
+                print (subtitles[indicator+1: indicator + 13])
+                print (subtitles[indicator - 16: indicator - 4])
+                #print (indicator[])
+
+                average = (timestamp_to_sec(subtitles[indicator+1: indicator+13]) + timestamp_to_sec(subtitles[indicator-16: indicator-4]))/2
+                getFrame(vidcap_array[i], average)
+                await message.channel.send(file=discord.File('frame.jpg'))
+                exists = True
+        if exists == False:
+            await message.channel.send("are you sure the quote exists")
+
+
+    
+    if re.search("^!frame", message.content):
+        if getFrame(timestamp_to_sec(message.content[7:])):
+            await message.channel.send(file=discord.File('frame.jpg'))
+        else:
+            await message.channel.send("botu bozmayin")
+        
 
 client.run(TOKEN)
+#<Message id=830811270453264446 channel=<TextChannel id=188223698786975744 name='general' position=0 nsfw=False news=False category_id=None> type=<MessageType.default: 0> author=<Member id=156536977766744066 name='Gürkan' discriminator='5338' bot=False nick='Gürkan' guild=<Guild id=188223698786975744 name='labalov' shard_id=None chunked=False member_count=32>> flags=<MessageFlags value=0>>
