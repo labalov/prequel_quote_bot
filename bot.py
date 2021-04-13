@@ -9,6 +9,14 @@ from dotenv import load_dotenv
 from PIL import Image, ImageFont, ImageDraw
 import textwrap
 import numpy as np
+from fuzzysearch import find_near_matches
+
+def get_fuzzy_search(input_text, subtitle_data, max_dist = 5):
+    match_str = find_near_matches(input_text, subtitle_data, max_l_dist = max_dist)
+    if len(match_str)>0:
+        return match_str[0].start
+    else:
+        return -1
 
 def addCaption(filename, text, percentage=0.8, outname = 'frame_out.jpg'):
     im = Image.open(filename)
@@ -76,9 +84,10 @@ async def on_message(message):
             for element in quote:
                 quote_regex += element
                 quote_regex += "\W*"
-            
+            # if get_fuzzy_search(quote_raw.lower(), subtitles) > -1 and ...
             if re.search(quote_regex, subtitles) and exists == False:
                 last = re.search(quote_regex, subtitles).start()
+                # last = get_fuzzy_search(quote_raw.lower(), subtitles)
                 print(last)
 
                 if re.search("(?s:.*)-->", subtitles[0:last]):
