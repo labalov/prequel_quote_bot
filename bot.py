@@ -7,7 +7,8 @@ import discord
 from dotenv import load_dotenv
 
 from PIL import Image, ImageFont, ImageDraw
-
+import textwrap
+import numpy as np
 
 def addCaption(filename, text, percentage=0.8, outname = 'frame_out.jpg'):
     im = Image.open(filename)
@@ -15,8 +16,17 @@ def addCaption(filename, text, percentage=0.8, outname = 'frame_out.jpg'):
     _font = ImageFont.truetype("OpenSans-SemiBold.ttf", 48) # Download from https://fonts.google.com/specimen/Open+Sans
     W, H = im.size
     w, h = _draw.textsize(text, font=_font)
-    _draw.text(((W-w)/2+4,(H-h)*percentage+4), text, font=_font, fill="black")
-    _draw.text(((W-w)/2,(H-h)*percentage), text, font=_font, fill="white")
+    avg_width = _font.getsize(text)[0] / len(text)
+    textwrapper = textwrap.TextWrapper(width = int(np.round(percentage*W/avg_width)))
+    out_text = textwrapper.wrap(text)
+    max_len = 0
+    for i in out_text:
+        if len(i)>max_len:
+            max_len = len(i)
+            w, h = _draw.textsize(i, font=_font)
+    out_text = '\n'.join(out_text)
+    _draw.text(((W-w)/2+4,(H-h)*percentage+4), out_text, align='center', font=_font, fill="black")
+    _draw.text(((W-w)/2,(H-h)*percentage), out_text, align='center', font=_font, fill="white")
     im.save(outname)
 
 def getFrame(video, sec):
