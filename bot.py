@@ -61,7 +61,7 @@ def find_quote_timestamp(subtitle_file, quote_raw):
         quote_regex += element
         quote_regex += "\W*"
     
-    if (len(quote_raw) > 10):
+    if (len(quote_raw) > 20):
         quote_index = get_fuzzy_search(quote_raw, subtitle_file)
     else:
         quote_search = re.search(quote_regex, subtitle_file)
