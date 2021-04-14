@@ -90,7 +90,7 @@ subtitles = {}
 for dir in movie_dirs:
     video_array = []
     subtitle_array = []
-    for file in os.listdir('movies/' + dir):
+    for file in sorted(os.listdir('movies/' + dir)):
         if file.endswith('.srt'):
             subtitle_array.append(open('./movies/' + dir + '/' + file, 'r', encoding=enc).read().lower())
         if file.endswith('.mp4'):
