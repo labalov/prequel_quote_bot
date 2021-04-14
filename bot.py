@@ -45,7 +45,6 @@ def getFrame(video, sec):
         cv2.imwrite("frame.jpg", image)     # save 
     return hasFrames
 
-#00:02:59,399
 def timestamp_to_sec(stamp):
     print(stamp)
     print(stamp[0:2])
@@ -55,14 +54,50 @@ def timestamp_to_sec(stamp):
     millis = int(stamp[9:12])
     return 3600*hour + 60*minute + second + millis/1000
 
+def find_quote_timestamp(subtitle_file, quote_raw):
+    quote = quote_raw.lower().replace(" ", "")
+    quote_regex = ""
+    for element in quote:
+        quote_regex += element
+        quote_regex += "\W*"
+    
+    if (len(quote_raw) > 10):
+        quote_index = get_fuzzy_search(quote_raw, subtitle_file)
+    else:
+        quote_search = re.search(quote_regex, subtitle_file)
+        if quote_search:
+            quote_index = quote_search.start()
+        else:
+            quote_index = -1
+
+    if quote_index != -1:
+        indicator_index = re.search("(?s:.*)-->", subtitle_file[0:quote_index])
+        if indicator_index:
+            indicator = indicator_index.end()
+            return (timestamp_to_sec(subtitle_file[indicator+1: indicator+13]) + timestamp_to_sec(subtitle_file[indicator-16: indicator-4]))/2
+    
+    return -1
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 client = discord.Client()
 enc = 'ISO-8859-1'
-vidcap_array = [cv2.VideoCapture('movies/1.mp4'), cv2.VideoCapture('movies/2.mp4'), cv2.VideoCapture('movies/3.mp4')]
-subtitles_array = [open('./movies/1.srt', 'r', encoding=enc).read().lower(), open('./movies/2.srt', 'r', encoding=enc).read().lower(), open('./movies/3.srt', 'r', encoding=enc).read().lower()]
+movie_dirs = os.listdir('movies')
+videos = {}
+subtitles = {}
+
+for dir in movie_dirs:
+    video_array = []
+    subtitle_array = []
+    for file in os.listdir('movies/' + dir):
+        if file.endswith('.srt'):
+            subtitle_array.append(open('./movies/' + dir + '/' + file, 'r', encoding=enc).read().lower())
+        if file.endswith('.mp4'):
+            video_array.append(cv2.VideoCapture(('./movies/' + dir + '/' + file)))
+    
+    videos[dir] = video_array
+    subtitles[dir] = subtitle_array
 
 @client.event
 async def on_ready():
@@ -75,35 +110,23 @@ async def on_message(message):
     print(message.content)
     exists = False
     if re.search("^!quote", message.content):
-        for i in range(0, 3):
-            subtitles = subtitles_array[i]
-            quote_raw = message.content[7:]
-            quote = quote_raw.lower().replace(" ", "")
-            #quote_regex = "..:..:..,... \-\-> ..:..:..,...(.|\s)*"
-            quote_regex = ""
-            for element in quote:
-                quote_regex += element
-                quote_regex += "\W*"
-            # if get_fuzzy_search(quote_raw.lower(), subtitles) > -1 and ...
-            if re.search(quote_regex, subtitles) and exists == False:
-                last = re.search(quote_regex, subtitles).start()
-                # last = get_fuzzy_search(quote_raw.lower(), subtitles)
-                print(last)
+        await message.channel.send('Available commands are: ' + ', '.join(movie_dirs))
+    elif re.search("^!", message.content):
+        command = message.content[1:].split(' ')[0]
+        quote = ' '.join(message.content[1:].split(' ')[1:])
+        if command in movie_dirs:
+            for i in range(0, len(videos[command])):
+                quote_timestamp = find_quote_timestamp(subtitles[command][i], quote)
 
-                if re.search("(?s:.*)-->", subtitles[0:last]):
-                    indicator = re.search("(?s:.*)-->", subtitles[0:last]).end()
-            
-                    print (subtitles[indicator+1: indicator + 13])
-                    print (subtitles[indicator - 16: indicator - 4])
+                if quote_timestamp != -1 and exists == False:
+                        getFrame(videos[command][i], quote_timestamp)
+                        addCaption('frame.jpg', quote)
+                        await message.channel.send(file=discord.File('frame_out.jpg'))
+                        exists = True
 
-                    average = (timestamp_to_sec(subtitles[indicator+1: indicator+13]) + timestamp_to_sec(subtitles[indicator-16: indicator-4]))/2
-                    getFrame(vidcap_array[i], average)
-                    addCaption('frame.jpg', quote_raw)
-                    await message.channel.send(file=discord.File('frame_out.jpg'))
-                    exists = True
-
-        if exists == False:
-            await message.channel.send("These aren't the quotes you are looking for.")
+            if exists == False:
+                await message.channel.send("These aren't the quotes you are looking for.")
+        else:
+            message.channel.send("That's not a valid command")
 
 client.run(TOKEN)
-#<Message id=830811270453264446 channel=<TextChannel id=188223698786975744 name='general' position=0 nsfw=False news=False category_id=None> type=<MessageType.default: 0> author=<Member id=156536977766744066 name='Gürkan' discriminator='5338' bot=False nick='Gürkan' guild=<Guild id=188223698786975744 name='labalov' shard_id=None chunked=False member_count=32>> flags=<MessageFlags value=0>>
