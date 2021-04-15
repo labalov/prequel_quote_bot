@@ -110,7 +110,7 @@ async def on_message(message):
     print(message.content)
     exists = False
     if re.search("^!quote", message.content):
-        await message.channel.send('Available commands are: ' + ', '.join(movie_dirs))
+        await message.channel.send('Available commands are: !' + ', !'.join(movie_dirs))
     elif re.search("^!", message.content):
         command = message.content[1:].split(' ')[0]
         quote = ' '.join(message.content[1:].split(' ')[1:])
